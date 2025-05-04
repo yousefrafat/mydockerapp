@@ -1,0 +1,92 @@
+x-app-common: &app-common
+  image: "${APP_IMAGE}"
+  build:
+    context: ./app
+    dockerfile: Dockerfile
+  env_file:
+    - .env
+  environment:
+    - REDIS_HOST=redis
+    - REDIS_PORT=${REDIS_PORT}
+    - REDIS_PASSWORD=${REDIS_PASSWORD}
+    - MONGO_URI=${MONGO_URI}
+    - APP_PORT=${APP_PORT}
+    - APP_HOST=${APP_HOST}
+  depends_on:
+    - redis
+    - mongo
+  restart: ${APP_RESTART_POLICY}
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:${APP_PORT}/health"]
+    interval: ${HEALTHCHECK_INTERVAL}
+    timeout: ${HEALTHCHECK_TIMEOUT}
+    retries: ${HEALTHCHECK_RETRIES}
+    start_period: ${HEALTHCHECK_START_PERIOD}
+  networks:
+    - app_network
+
+services:
+  app1:
+    <<: *app-common
+    container_name: app1
+    ports:
+      - "${APP_EXTERNAL_PORT1}:${APP_PORT}"
+
+  app2:
+    <<: *app-common
+    container_name: app2
+    ports:
+      - "${APP_EXTERNAL_PORT2}:${APP_PORT}"
+
+  redis:
+    image: "${REDIS_IMAGE}"
+    build:
+      context: ./redis
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "${REDIS_EXTERNAL_PORT}:${REDIS_PORT}"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - "${REDIS_DATA_VOLUME}:/data"
+    restart: ${REDIS_RESTART_POLICY}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: ${HEALTHCHECK_INTERVAL}
+      timeout: ${HEALTHCHECK_TIMEOUT}
+      retries: ${HEALTHCHECK_RETRIES}
+      start_period: ${HEALTHCHECK_START_PERIOD}
+    networks:
+      - app_network
+
+  mongo:
+    image: "${MONGO_IMAGE}"
+    build:
+      context: ./mongo
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "${MONGO_EXTERNAL_PORT}:27017"
+    volumes:
+      - "${MONGO_DATA_VOLUME}:/data/db"
+    restart: ${MONGO_RESTART_POLICY}
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: ${HEALTHCHECK_INTERVAL}
+      timeout: ${HEALTHCHECK_TIMEOUT}
+      retries: ${HEALTHCHECK_RETRIES}
+      start_period: ${HEALTHCHECK_START_PERIOD}
+    networks:
+      - app_network
+
+volumes:
+  app_redis_data: {}
+  app_mongo_data: {}
+
+networks:
+  app_network:
+    name: ${NETWORK_NAME}
+    driver: bridge
