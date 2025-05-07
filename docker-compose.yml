@@ -1,54 +1,67 @@
-x-app-common: &app-common
-  image: "${APP_IMAGE}"
-  build:
-    context: ./app
-    dockerfile: Dockerfile
-  env_file:
-    - .env
-  environment:
-    - REDIS_HOST=redis
-    - REDIS_PORT=${REDIS_PORT}
-    - REDIS_PASSWORD=${REDIS_PASSWORD}
-    - MONGO_URI=${MONGO_URI}
-    - APP_PORT=${APP_PORT}
-    - APP_HOST=${APP_HOST}
-  depends_on:
-    - redis
-    - mongo
-  restart: ${APP_RESTART_POLICY}
-  healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost:${APP_PORT}/health"]
-    interval: ${HEALTHCHECK_INTERVAL}
-    timeout: ${HEALTHCHECK_TIMEOUT}
-    retries: ${HEALTHCHECK_RETRIES}
-    start_period: ${HEALTHCHECK_START_PERIOD}
-  networks:
-    - app_network
+version: "3.3"
 
 services:
   app1:
-    <<: *app-common
+    build:
+      context: ./app
+      dockerfile: Dockerfile
     container_name: app1
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT}
+      - MONGO_URI=${MONGO_URI}
+      - APP_PORT=${APP_PORT}
+      - APP_HOST=${APP_HOST}
+    depends_on:
+      - redis
+      - mongo
+    restart: ${APP_RESTART_POLICY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${APP_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     ports:
       - "${APP_EXTERNAL_PORT1}:${APP_PORT}"
+    networks:
+      - app_network
 
   app2:
-    <<: *app-common
+    build:
+      context: ./app
+      dockerfile: Dockerfile
     container_name: app2
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - MONGO_URI=${MONGO_URI}
+      - APP_PORT=${APP_PORT}
+      - APP_HOST=${APP_HOST}
+    depends_on:
+      - redis
+      - mongo
+    restart: ${APP_RESTART_POLICY}
+    healthcheck:
+      interval: ${HEALTHCHECK_INTERVAL}
+      timeout: ${HEALTHCHECK_TIMEOUT}
+      retries: ${HEALTHCHECK_RETRIES}
+      start_period: ${HEALTHCHECK_START_PERIOD}
     ports:
       - "${APP_EXTERNAL_PORT2}:${APP_PORT}"
+    networks:
+      - app_network
 
   redis:
-    image: "${REDIS_IMAGE}"
-    build:
-      context: ./redis
-      dockerfile: Dockerfile
+    image: ${REDIS_IMAGE}  # Pull Redis from Docker Hub
     env_file:
       - .env
     ports:
       - "${REDIS_EXTERNAL_PORT}:${REDIS_PORT}"
-    environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
       - "${REDIS_DATA_VOLUME}:/data"
     restart: ${REDIS_RESTART_POLICY}
@@ -62,10 +75,7 @@ services:
       - app_network
 
   mongo:
-    image: "${MONGO_IMAGE}"
-    build:
-      context: ./mongo
-      dockerfile: Dockerfile
+    image: ${MONGO_IMAGE}  # Pull MongoDB from Docker Hub
     env_file:
       - .env
     ports:
@@ -83,8 +93,10 @@ services:
       - app_network
 
 volumes:
-  app_redis_data: {}
-  app_mongo_data: {}
+  app_redis_data:
+    driver: local
+  app_mongo_data:
+    driver: local 
 
 networks:
   app_network:
