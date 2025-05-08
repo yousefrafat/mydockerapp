@@ -74,7 +74,7 @@ def hello_world():
         </style>
     </head>
     <body>
-        <h1>Hello World!</h1>
+        <h1>BEYOND LIMITS!</h1>
         <table>
             <tr><th>Name</th><th>Yousef Alkaranwi</th></tr>
             <tr><td>id</td><td>{visitor_id}</td></tr>
@@ -83,9 +83,6 @@ def hello_world():
             <tr><td>visits (this IP)</td><td>{ip_visits}</td></tr>
             <tr><td>total visits</td><td>{total_visits}</td></tr>
         </table>
-	<h1>Yousef Will become a good DevOps Engineer in Beyon Limits Inshallah</h1>
- 	<h2>test</h2>
-  	<h2>test</h2>
     </body>
     </html>
     """
