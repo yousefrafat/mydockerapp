@@ -83,7 +83,6 @@ def hello_world():
             <tr><td>visits (this IP)</td><td>{ip_visits}</td></tr>
             <tr><td>total visits</td><td>{total_visits}</td></tr>
         </table>
-        <h1>MAJD JAMA'AH</h1>
     </body>
     </html>
     """
